@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
+import { CommentsModule } from './comments/comments.module';
+import { PostsModule } from './posts/posts.module';
 
 @Module({
   imports: [
@@ -14,6 +16,8 @@ import { MongooseModule } from '@nestjs/mongoose';
         uri: configService.getOrThrow<string>('MONGODB_URI'),
       }),
     }),
+    PostsModule,
+    CommentsModule,
   ],
 })
 export class AppModule {}
