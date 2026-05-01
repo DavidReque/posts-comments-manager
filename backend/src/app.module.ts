@@ -1,10 +1,19 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { CommentsModule } from './comments/comments.module';
-import { PostsModule } from './posts/posts.module';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { MongooseModule } from '@nestjs/mongoose';
 
 @Module({
-  imports: [PostsModule, CommentsModule],
-  controllers: [AppController],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true, // hace que las variables de entorno esten disponibles en todo el modulo
+    }),
+    // Conexión a MongoDB
+    MongooseModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        uri: configService.getOrThrow<string>('MONGODB_URI'),
+      }),
+    }),
+  ],
 })
 export class AppModule {}
