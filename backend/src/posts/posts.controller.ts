@@ -6,10 +6,12 @@ import {
   Delete,
   Get,
   Param,
+  ParseArrayPipe,
   Post as HttpPost,
   Put,
 } from '@nestjs/common';
 import { Types } from 'mongoose';
+import { ApiResponse } from '../common/utils/api-response';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { PostsService } from './posts.service';
@@ -20,82 +22,67 @@ export class PostsController {
 
   // metodo para obtener todos los posts
   @Get()
-  findAll() {
-    return this.postsService.findAll();
+  async findAll() {
+    const posts = await this.postsService.findAll();
+
+    return ApiResponse.success(posts, 'Posts obtenidos correctamente');
   }
 
   // metodo para obtener un post por su id
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  async findOne(@Param('id') id: string) {
     this.validateObjectId(id);
 
-    return this.postsService.findOne(id);
+    const post = await this.postsService.findOne(id);
+
+    return ApiResponse.success(post, 'Post obtenido correctamente');
   }
 
   // metodo para crear un post
   @HttpPost()
-  create(@Body() createPostDto: CreatePostDto) {
-    this.validateCreatePostDto(createPostDto);
+  async create(@Body() createPostDto: CreatePostDto) {
+    const post = await this.postsService.create(createPostDto);
 
-    return this.postsService.create(createPostDto);
+    return ApiResponse.success(post, 'Post creado correctamente');
   }
 
   // metodo para crear muchos posts
   @HttpPost('bulk')
-  createMany(@Body() createPostDtos: CreatePostDto[]) {
-    if (!Array.isArray(createPostDtos) || createPostDtos.length === 0) {
+  async createMany(
+    @Body(new ParseArrayPipe({ items: CreatePostDto }))
+    createPostDtos: CreatePostDto[],
+  ) {
+    if (createPostDtos.length === 0) {
       throw new BadRequestException('El cuerpo debe ser un arreglo de posts');
     }
 
-    createPostDtos.forEach((postDto) => this.validateCreatePostDto(postDto));
+    const posts = await this.postsService.createMany(createPostDtos);
 
-    return this.postsService.createMany(createPostDtos);
+    return ApiResponse.success(posts, 'Posts creados correctamente');
   }
 
   // metodo para actualizar un post
   @Put(':id')
-  update(@Param('id') id: string, @Body() updatePostDto: UpdatePostDto) {
-    this.validateObjectId(id);
-    this.validateUpdatePostDto(updatePostDto);
-
-    return this.postsService.update(id, updatePostDto);
-  }
-
-  // metodo para eliminar un post
-  @Delete(':id')
-  remove(@Param('id') id: string) {
+  async update(@Param('id') id: string, @Body() updatePostDto: UpdatePostDto) {
     this.validateObjectId(id);
 
-    return this.postsService.remove(id);
-  }
-
-  // metodo para validar el DTO de creacion de post
-  private validateCreatePostDto(createPostDto: CreatePostDto) {
-    if (
-      !createPostDto ||
-      !this.isNonEmptyString(createPostDto.title) ||
-      !this.isNonEmptyString(createPostDto.body) ||
-      !this.isNonEmptyString(createPostDto.author)
-    ) {
-      throw new BadRequestException('title, body y author son obligatorios');
-    }
-  }
-
-  // metodo para validar el DTO de actualizacion de post
-  private validateUpdatePostDto(updatePostDto: UpdatePostDto) {
     if (!updatePostDto || Object.keys(updatePostDto).length === 0) {
       throw new BadRequestException('Debe enviar al menos un campo para editar');
     }
 
-    const { title, body, author } = updatePostDto;
+    const post = await this.postsService.update(id, updatePostDto);
 
-    if (
-      (title !== undefined && !this.isNonEmptyString(title)) ||
-      (body !== undefined && !this.isNonEmptyString(body)) ||
-      (author !== undefined && !this.isNonEmptyString(author))
-    ) {
-      throw new BadRequestException('Los campos enviados deben ser texto');
-    }
+    return ApiResponse.success(post, 'Post actualizado correctamente');
+  }
+
+  // metodo para eliminar un post
+  @Delete(':id')
+  async remove(@Param('id') id: string) {
+    this.validateObjectId(id);
+
+    const post = await this.postsService.remove(id);
+
+    return ApiResponse.success(post, 'Post eliminado correctamente');
   }
 
   // metodo para validar el id de un post
@@ -103,10 +90,5 @@ export class PostsController {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException('Id invalido');
     }
-  }
-
-  // metodo para validar si el valor es un string no vacio
-  private isNonEmptyString(value: unknown): value is string {
-    return typeof value === 'string' && value.trim().length > 0;
   }
 }
