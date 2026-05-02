@@ -1,11 +1,19 @@
 // rutas de la aplicacion
 import { Routes } from '@angular/router';
+import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   {
     path: '',
     pathMatch: 'full',
     redirectTo: 'posts',
+  },
+  {
+    path: 'login',
+    loadComponent: () =>
+      import('./features/auth/pages/login-page.component').then(
+        (component) => component.LoginPageComponent,
+      ),
   },
   {
     path: 'posts',
@@ -17,6 +25,7 @@ export const routes: Routes = [
   },
   {
     path: 'posts/new',
+    canActivate: [authGuard],
     // carga el componente de la pagina de creacion de post
     loadComponent: () =>
       import('./features/posts/pages/post-form-page.component').then(
@@ -25,6 +34,7 @@ export const routes: Routes = [
   },
   {
     path: 'posts/:id/edit',
+    canActivate: [authGuard],
     // carga el componente de la pagina de edicion de post
     loadComponent: () =>
       import('./features/posts/pages/post-form-page.component').then(

@@ -2,6 +2,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { EMPTY, catchError, delay, retry, tap } from 'rxjs';
+import { AuthService } from '../../../core/services/auth.service';
 import { PostCardComponent } from '../components/post-card.component';
 import { Post, PostsService } from '../services/posts.service';
 
@@ -16,12 +17,30 @@ import { Post, PostsService } from '../services/posts.service';
             <p class="text-sm font-medium uppercase tracking-wide text-slate-500">Posts</p>
             <h1 class="mt-2 text-3xl font-bold text-slate-950">Listado de posts</h1>
           </div>
-          <a
-            class="w-fit rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700"
-            routerLink="/posts/new"
-          >
-            Crear post
-          </a>
+          <div class="flex flex-wrap items-center gap-2">
+            @if (authService.isAuthenticated()) {
+              <a
+                class="w-fit rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700"
+                routerLink="/posts/new"
+              >
+                Crear post
+              </a>
+              <button
+                class="w-fit rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+                type="button"
+                (click)="logout()"
+              >
+                Cerrar sesion
+              </button>
+            } @else {
+              <a
+                class="w-fit rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+                routerLink="/login"
+              >
+                Iniciar sesion
+              </a>
+            }
+          </div>
         </header>
 
         <div class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
@@ -101,6 +120,7 @@ import { Post, PostsService } from '../services/posts.service';
 })
 export class PostsListPageComponent {
   private readonly postsService = inject(PostsService); // inyeccion de dependencias del servicio de posts
+  protected readonly authService = inject(AuthService);
 
   protected readonly posts = signal<Post[]>([]); // signal para almacenar los posts
   protected readonly search = signal<string>(''); // signal para almacenar el texto de busqueda
@@ -132,5 +152,9 @@ export class PostsListPageComponent {
       .subscribe({
         complete: () => this.isLoading.set(false),
       });
+  }
+
+  protected logout(): void {
+    this.authService.logout();
   }
 }

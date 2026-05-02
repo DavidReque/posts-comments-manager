@@ -9,8 +9,10 @@ import {
   ParseArrayPipe,
   Post as HttpPost,
   Put,
+  UseGuards,
 } from '@nestjs/common';
 import { Types } from 'mongoose';
+import { AuthGuard } from '../auth/auth.guard';
 import { ApiResponse } from '../common/utils/api-response';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
@@ -40,6 +42,7 @@ export class PostsController {
 
   // metodo para crear un post
   @HttpPost()
+  @UseGuards(AuthGuard)
   async create(@Body() createPostDto: CreatePostDto) {
     const post = await this.postsService.create(createPostDto);
 
@@ -48,6 +51,7 @@ export class PostsController {
 
   // metodo para crear muchos posts
   @HttpPost('bulk')
+  @UseGuards(AuthGuard)
   async createMany(
     @Body(new ParseArrayPipe({ items: CreatePostDto }))
     createPostDtos: CreatePostDto[],
@@ -63,6 +67,7 @@ export class PostsController {
 
   // metodo para actualizar un post
   @Put(':id')
+  @UseGuards(AuthGuard)
   async update(@Param('id') id: string, @Body() updatePostDto: UpdatePostDto) {
     this.validateObjectId(id);
 

@@ -8,8 +8,10 @@ import {
   Param,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { Types } from 'mongoose';
+import { AuthGuard } from '../auth/auth.guard';
 import { ApiResponse } from '../common/utils/api-response';
 import { CommentsService } from './comments.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
@@ -30,6 +32,7 @@ export class CommentsController {
 
   // metodo para crear un comentario
   @Post()
+  @UseGuards(AuthGuard)
   async create(@Body() createCommentDto: CreateCommentDto) {
     const comment = await this.commentsService.create(createCommentDto);
 
@@ -38,6 +41,7 @@ export class CommentsController {
 
   // metodo para eliminar un comentario
   @Delete(':id')
+  @UseGuards(AuthGuard)
   async remove(@Param('id') id: string) {
     this.validateObjectId(id, 'id');
 
