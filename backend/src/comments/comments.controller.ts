@@ -32,7 +32,6 @@ export class CommentsController {
 
   // metodo para crear un comentario
   @Post()
-  @UseGuards(AuthGuard)
   async create(@Body() createCommentDto: CreateCommentDto) {
     const comment = await this.commentsService.create(createCommentDto);
 

@@ -95,66 +95,59 @@ import { Post, PostComment, PostsService } from '../services/posts.service';
           <section class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
             <h2 class="text-2xl font-semibold text-slate-900">Crear comentario</h2>
 
-            @if (authService.isAuthenticated()) {
-              <form class="mt-5 space-y-4" [formGroup]="commentForm" (ngSubmit)="createComment(post._id)">
-                <div class="grid gap-4 sm:grid-cols-2">
-                  <div class="space-y-2">
-                    <label class="block text-sm font-medium text-slate-700" for="name">Nombre</label>
-                    <input
-                      class="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-900 outline-none focus:border-slate-900"
-                      id="name"
-                      type="text"
-                      formControlName="name"
-                    />
-                    @if (isCommentInvalid('name')) {
-                      <p class="text-sm text-red-600">El nombre es requerido.</p>
-                    }
-                  </div>
-
-                  <div class="space-y-2">
-                    <label class="block text-sm font-medium text-slate-700" for="email">Email</label>
-                    <input
-                      class="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-900 outline-none focus:border-slate-900"
-                      id="email"
-                      type="email"
-                      formControlName="email"
-                    />
-                    @if (isCommentInvalid('email')) {
-                      <p class="text-sm text-red-600">Ingresa un email valido.</p>
-                    }
-                  </div>
-                </div>
-
+            <form class="mt-5 space-y-4" [formGroup]="commentForm" (ngSubmit)="createComment(post._id)">
+              <div class="grid gap-4 sm:grid-cols-2">
                 <div class="space-y-2">
-                  <label class="block text-sm font-medium text-slate-700" for="comment-body">Comentario</label>
-                  <textarea
-                    class="min-h-28 w-full rounded-md border border-slate-300 px-3 py-2 text-slate-900 outline-none focus:border-slate-900"
-                    id="comment-body"
-                    formControlName="body"
-                  ></textarea>
-                  @if (isCommentInvalid('body')) {
-                    <p class="text-sm text-red-600">El comentario es requerido.</p>
+                  <label class="block text-sm font-medium text-slate-700" for="name">Nombre</label>
+                  <input
+                    class="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-900 outline-none focus:border-slate-900"
+                    id="name"
+                    type="text"
+                    formControlName="name"
+                  />
+                  @if (isCommentInvalid('name')) {
+                    <p class="text-sm text-red-600">El nombre es requerido.</p>
                   }
                 </div>
 
-                @if (commentError()) {
-                  <p class="rounded-md bg-red-50 p-3 text-sm text-red-700">{{ commentError() }}</p>
-                }
+                <div class="space-y-2">
+                  <label class="block text-sm font-medium text-slate-700" for="email">Email</label>
+                  <input
+                    class="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-900 outline-none focus:border-slate-900"
+                    id="email"
+                    type="email"
+                    formControlName="email"
+                  />
+                  @if (isCommentInvalid('email')) {
+                    <p class="text-sm text-red-600">Ingresa un email valido.</p>
+                  }
+                </div>
+              </div>
 
-                <button
-                  class="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-400"
-                  type="submit"
-                  [disabled]="isSavingComment()"
-                >
-                  {{ isSavingComment() ? 'Guardando...' : 'Publicar comentario' }}
-                </button>
-              </form>
-            } @else {
-              <p class="mt-4 text-sm text-slate-600">
-                Debes iniciar sesion para comentar.
-                <a class="font-medium text-slate-900 underline" routerLink="/login">Ir a login</a>
-              </p>
-            }
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-slate-700" for="comment-body">Comentario</label>
+                <textarea
+                  class="min-h-28 w-full rounded-md border border-slate-300 px-3 py-2 text-slate-900 outline-none focus:border-slate-900"
+                  id="comment-body"
+                  formControlName="body"
+                ></textarea>
+                @if (isCommentInvalid('body')) {
+                  <p class="text-sm text-red-600">El comentario es requerido.</p>
+                }
+              </div>
+
+              @if (commentError()) {
+                <p class="rounded-md bg-red-50 p-3 text-sm text-red-700">{{ commentError() }}</p>
+              }
+
+              <button
+                class="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-400"
+                type="submit"
+                [disabled]="isSavingComment()"
+              >
+                {{ isSavingComment() ? 'Guardando...' : 'Publicar comentario' }}
+              </button>
+            </form>
           </section>
 
           <app-comments-list [comments]="comments()" />
