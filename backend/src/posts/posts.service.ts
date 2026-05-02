@@ -3,17 +3,49 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CreatePostDto } from './dto/create-post.dto';
+import { FindPostsQueryDto } from './dto/find-posts-query.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { Post } from './schemas/post.schema';
+
+type PostFilter = Record<string, unknown>;
+
+export interface PaginatedPosts {
+  items: Post[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
 
 @Injectable()
 export class PostsService {
   // inyeccion de dependencias del modelo de Post
   constructor(@InjectModel(Post.name) private readonly postModel: Model<Post>) {}
   
-  // metodo para obtener todos los posts
-  findAll() {
-    return this.postModel.find().exec();
+  // metodo para obtener posts paginados
+  async findAll(query: FindPostsQueryDto): Promise<PaginatedPosts> {
+    const page = query.page; // pagina actual
+    const limit = query.limit; // limite de posts por pagina
+    const skip = (page - 1) * limit; // cantidad de posts a saltar
+    const filter = this.buildFilter(query.search); // filtro de busqueda
+    const [items, total] = await Promise.all([ // resultados de la busqueda
+      // busca los posts con el filtro y los ordena por fecha de creacion
+      this.postModel
+        .find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.postModel.countDocuments(filter).exec(),
+    ]);
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   // metodo para obtener un post por su id
@@ -59,5 +91,21 @@ export class PostsService {
     }
 
     return post;
+  }
+
+  private buildFilter(search: string): PostFilter {
+    const normalizedSearch = search.trim();
+
+    if (!normalizedSearch) {
+      return {};
+    }
+
+    return {
+      title: { $regex: this.escapeRegex(normalizedSearch), $options: 'i' },
+    };
+  }
+
+  private escapeRegex(value: string): string {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 }

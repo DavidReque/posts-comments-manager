@@ -1,13 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, PLATFORM_ID, computed, inject, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { map } from 'rxjs';
-
-interface ApiResponse<T> {
-  success: boolean;
-  message: string;
-  data: T;
-}
+import { tap } from 'rxjs';
 
 interface LoginResponse {
   accessToken: string;
@@ -33,9 +27,9 @@ export class AuthService {
 
   // metodo para iniciar sesion
   login(credentials: { username: string; password: string }) {
-    return this.http
-      .post<ApiResponse<LoginResponse>>('/api/auth/login', credentials)
-      .pipe(map((response) => this.setToken(response.data.accessToken)));
+    return this.http.post<LoginResponse>('/api/auth/login', credentials).pipe(
+      tap((data) => this.setToken(data.accessToken)),
+    );
   }
 
   // metodo para cerrar sesion

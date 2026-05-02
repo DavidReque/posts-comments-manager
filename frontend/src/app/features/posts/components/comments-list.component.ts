@@ -1,11 +1,12 @@
 // componente para listar los comentarios de un post
 import { DatePipe } from '@angular/common';
 import { Component, input } from '@angular/core';
+import { TruncatePipe } from '../../../shared/pipes/truncate.pipe';
 import { PostComment } from '../services/posts.service';
 
 @Component({
   selector: 'app-comments-list',
-  imports: [DatePipe],
+  imports: [DatePipe, TruncatePipe],
   template: `
     <section class="space-y-4">
       <div class="flex items-center justify-between">
@@ -30,7 +31,7 @@ import { PostComment } from '../services/posts.service';
                   {{ comment.createdAt | date: 'mediumDate' }}
                 </time>
               </div>
-              <p class="mt-3 text-sm leading-relaxed text-slate-700">{{ comment.body }}</p>
+              <p class="mt-3 text-sm leading-relaxed text-slate-700">{{ comment.body | truncate: 220 }}</p>
             </article>
           }
         </div>

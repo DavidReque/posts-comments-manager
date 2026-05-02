@@ -2,11 +2,12 @@
 import { DatePipe } from '@angular/common';
 import { Component, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { TruncatePipe } from '../../../shared/pipes/truncate.pipe';
 import { Post } from '../services/posts.service';
 
 @Component({
   selector: 'app-post-card',
-  imports: [DatePipe, RouterLink],
+  imports: [DatePipe, RouterLink, TruncatePipe],
   template: `
     <article class="group flex h-full flex-col rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:border-slate-300 hover:shadow-md">
       <div class="flex-1 space-y-3">
@@ -21,7 +22,7 @@ import { Post } from '../services/posts.service';
         <h2 class="text-lg font-semibold leading-snug text-slate-900 transition-colors group-hover:text-slate-700">
           {{ post().title }}
         </h2>
-        <p class="line-clamp-2 text-sm text-slate-500">{{ post().body }}</p>
+        <p class="line-clamp-2 text-sm text-slate-500">{{ post().body | truncate: 140 }}</p>
       </div>
 
       <div class="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-4">

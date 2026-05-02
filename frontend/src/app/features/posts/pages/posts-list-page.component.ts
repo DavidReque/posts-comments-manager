@@ -1,7 +1,7 @@
 // pagina para mostrar el listado de posts
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { EMPTY, catchError, delay, retry, tap } from 'rxjs';
+import { EMPTY, catchError, delay, finalize, retry, tap } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { PostCardComponent } from '../components/post-card.component';
 import { Post, PostsService } from '../services/posts.service';
@@ -52,7 +52,7 @@ import { Post, PostsService } from '../services/posts.service';
             id="search"
             type="search"
             [value]="search()"
-            (input)="search.set($any($event.target).value)"
+            (input)="onSearch($any($event.target).value)"
           />
         </div>
 
@@ -87,11 +87,37 @@ import { Post, PostsService } from '../services/posts.service';
               <p class="mt-0.5 text-sm text-red-600">{{ errorMessage() }}</p>
             </div>
           </div>
-        } @else if (filteredPosts().length > 0) {
-          <div class="grid gap-4 md:grid-cols-2">
-            @for (post of filteredPosts(); track post._id) {
-              <app-post-card [post]="post" />
-            }
+        } @else if (posts().length > 0) {
+          <div class="space-y-5">
+            <div class="grid gap-4 md:grid-cols-2">
+              @for (post of posts(); track post._id) {
+                <app-post-card [post]="post" />
+              }
+            </div>
+
+            <div class="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-600 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+              <p>
+                Pagina {{ page() }} de {{ totalPages() }} · {{ total() }} posts
+              </p>
+              <div class="flex gap-2">
+                <button
+                  class="rounded-md border border-slate-300 px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-300"
+                  type="button"
+                  [disabled]="!hasPreviousPage()"
+                  (click)="goToPreviousPage()"
+                >
+                  Anterior
+                </button>
+                <button
+                  class="rounded-md border border-slate-300 px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-300"
+                  type="button"
+                  [disabled]="!hasNextPage()"
+                  (click)="goToNextPage()"
+                >
+                  Siguiente
+                </button>
+              </div>
+            </div>
           </div>
         } @else {
           <div class="flex flex-col items-center rounded-xl border border-dashed border-slate-300 bg-white py-14 text-center">
@@ -122,39 +148,79 @@ export class PostsListPageComponent {
   private readonly postsService = inject(PostsService); // inyeccion de dependencias del servicio de posts
   protected readonly authService = inject(AuthService);
 
+  private readonly limit = 6;
   protected readonly posts = signal<Post[]>([]); // signal para almacenar los posts
   protected readonly search = signal<string>(''); // signal para almacenar el texto de busqueda
   protected readonly isLoading = signal(true); // signal para almacenar el estado de carga
   protected readonly errorMessage = signal(''); // signal para almacenar el mensaje de error
+  protected readonly page = signal(1);
+  protected readonly total = signal(0);
+  protected readonly totalPages = signal(0);
 
-  protected readonly filteredPosts = computed(() => // computed para filtrar los posts basado en el texto de busqueda
-    this.posts().filter((post) =>
-      post.title.toLowerCase().includes(this.search().toLowerCase()),
-    ),
-  );
+  protected readonly hasPreviousPage = computed(() => this.page() > 1);
+  protected readonly hasNextPage = computed(() => this.page() < this.totalPages());
 
   constructor() {
+    this.loadPosts();
+  }
+
+  protected onSearch(value: string): void {
+    this.search.set(value);
+    this.page.set(1);
+    this.loadPosts();
+  }
+
+  protected goToPreviousPage(): void {
+    if (!this.hasPreviousPage()) {
+      return;
+    }
+
+    this.page.update((page) => page - 1);
+    this.loadPosts();
+  }
+
+  protected goToNextPage(): void {
+    if (!this.hasNextPage()) {
+      return;
+    }
+
+    this.page.update((page) => page + 1);
+    this.loadPosts();
+  }
+
+  protected logout(): void {
+    this.authService.logout();
+  }
+
+  private loadPosts(): void {
+    this.isLoading.set(true);
+    this.errorMessage.set('');
+
     this.postsService
-      .getPosts()
+      .getPosts({
+        page: this.page(),
+        limit: this.limit,
+        search: this.search().trim(),
+      })
       .pipe(
         // reintenta hasta 2 veces si la peticion falla
         retry(2),
         // espera minima para que el estado de carga sea visible
         delay(400),
         // actualiza el signal de posts como efecto secundario
-        tap((posts) => this.posts.set(posts)),
+        tap((response) => {
+          this.posts.set(response.items);
+          this.page.set(response.page);
+          this.total.set(response.total);
+          this.totalPages.set(response.totalPages);
+        }),
         // captura el error definitivo tras los reintentos
         catchError(() => {
           this.errorMessage.set('No se pudieron cargar los posts.');
           return EMPTY;
         }),
+        finalize(() => this.isLoading.set(false)),
       )
-      .subscribe({
-        complete: () => this.isLoading.set(false),
-      });
-  }
-
-  protected logout(): void {
-    this.authService.logout();
+      .subscribe();
   }
 }

@@ -2,11 +2,12 @@
 import { Component, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { AutofocusDirective } from '../../../shared/directives/autofocus.directive';
 import { PostsService } from '../services/posts.service';
 
 @Component({
   selector: 'app-post-form-page',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, AutofocusDirective],
   template: `
     <main class="min-h-screen bg-slate-50 px-4 py-8">
       <section class="mx-auto max-w-3xl space-y-6">
@@ -43,6 +44,7 @@ import { PostsService } from '../services/posts.service';
                   id="title"
                   type="text"
                   formControlName="title"
+                  appAutofocus
                 />
                 @if (isInvalid('title')) {
                   <p class="flex items-center gap-1 text-xs text-red-600">

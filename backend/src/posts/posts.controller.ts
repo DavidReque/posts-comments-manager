@@ -8,6 +8,7 @@ import {
   Param,
   ParseArrayPipe,
   Post as HttpPost,
+  Query,
   Put,
   UseGuards,
 } from '@nestjs/common';
@@ -15,6 +16,7 @@ import { Types } from 'mongoose';
 import { AuthGuard } from '../auth/auth.guard';
 import { ApiResponse } from '../common/utils/api-response';
 import { CreatePostDto } from './dto/create-post.dto';
+import { FindPostsQueryDto } from './dto/find-posts-query.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { PostsService } from './posts.service';
 
@@ -24,8 +26,8 @@ export class PostsController {
 
   // metodo para obtener todos los posts
   @Get()
-  async findAll() {
-    const posts = await this.postsService.findAll();
+  async findAll(@Query() query: FindPostsQueryDto) {
+    const posts = await this.postsService.findAll(query);
 
     return ApiResponse.success(posts, 'Posts obtenidos correctamente');
   }

@@ -2,10 +2,11 @@ import { Component, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { AutofocusDirective } from '../../../shared/directives/autofocus.directive';
 
 @Component({ // componente para la pagina de login
   selector: 'app-login-page',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, AutofocusDirective],
   template: `
     <main class="min-h-screen bg-slate-50 px-4 py-8">
       <section class="mx-auto max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -20,6 +21,7 @@ import { AuthService } from '../../../core/services/auth.service';
               id="username"
               type="text"
               formControlName="username"
+              appAutofocus
             />
           </div>
 
