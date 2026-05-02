@@ -1,0 +1,26 @@
+services:
+  api:
+    build:
+      context: .
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      MONGODB_URI: mongodb://mongo:27017/posts-comments-manager
+      FRONTEND_URL: http://localhost:4200
+      JWT_SECRET: dev-jwt-secret
+      JWT_EXPIRES_IN_SECONDS: 3600
+      AUTH_USERNAME: admin
+      AUTH_PASSWORD: admin123
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:
