@@ -3,7 +3,7 @@ import { DatePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { EMPTY, catchError, forkJoin, map, retry, switchMap, tap } from 'rxjs';
 import { CommentsListComponent } from '../components/comments-list.component';
 import { Post, PostComment, PostsService } from '../services/posts.service';
 
@@ -17,7 +17,49 @@ import { Post, PostComment, PostsService } from '../services/posts.service';
           Volver al listado
         </a>
 
-        @if (post(); as post) {
+        @if (isLoading()) {
+          <div class="animate-pulse space-y-6">
+            <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div class="space-y-4">
+                <div class="h-4 w-20 rounded-full bg-slate-200"></div>
+                <div class="h-8 w-2/3 rounded bg-slate-200"></div>
+                <div class="flex gap-4">
+                  <div class="h-4 w-36 rounded bg-slate-200"></div>
+                  <div class="h-4 w-36 rounded bg-slate-200"></div>
+                </div>
+                <div class="space-y-2 pt-2">
+                  <div class="h-4 w-full rounded bg-slate-200"></div>
+                  <div class="h-4 w-full rounded bg-slate-200"></div>
+                  <div class="h-4 w-3/4 rounded bg-slate-200"></div>
+                </div>
+              </div>
+            </div>
+            <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div class="h-6 w-36 rounded bg-slate-200"></div>
+              <div class="mt-4 space-y-3">
+                @for (_ of [1, 2]; track $index) {
+                  <div class="rounded-lg border border-slate-200 p-4 space-y-2">
+                    <div class="h-4 w-32 rounded bg-slate-200"></div>
+                    <div class="h-4 w-full rounded bg-slate-200"></div>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        } @else if (errorMessage()) {
+          <div class="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4">
+            <svg class="mt-0.5 h-5 w-5 shrink-0 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16zm-.75-9.25a.75.75 0 0 1 1.5 0v3.5a.75.75 0 0 1-1.5 0v-3.5zm.75 6a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5z" clip-rule="evenodd"/>
+            </svg>
+            <div>
+              <p class="font-medium text-red-700">Error al cargar el post</p>
+              <p class="mt-0.5 text-sm text-red-600">{{ errorMessage() }}</p>
+              <a class="mt-2 inline-block text-sm font-medium text-red-700 underline hover:text-red-900" routerLink="/posts">
+                Volver al listado
+              </a>
+            </div>
+          </div>
+        } @else if (post(); as post) {
           <article class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
             <header class="space-y-3">
               <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -106,14 +148,6 @@ import { Post, PostComment, PostsService } from '../services/posts.service';
           </section>
 
           <app-comments-list [comments]="comments()" />
-        } @else if (errorMessage()) {
-          <p class="rounded-lg border border-red-200 bg-red-50 p-6 text-red-700">
-            {{ errorMessage() }}
-          </p>
-        } @else {
-          <p class="rounded-lg border border-slate-200 bg-white p-6 text-slate-500">
-            Cargando detalle del post...
-          </p>
         }
       </section>
     </main>
@@ -123,10 +157,10 @@ export class PostDetailPageComponent {
   private readonly formBuilder = inject(NonNullableFormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly postsService = inject(PostsService);
-  private readonly postId = this.route.snapshot.paramMap.get('id');
 
   protected readonly post = signal<Post | null>(null);
   protected readonly comments = signal<PostComment[]>([]);
+  protected readonly isLoading = signal(true);
   protected readonly errorMessage = signal('');
   protected readonly commentError = signal('');
   protected readonly isSavingComment = signal(false);
@@ -138,21 +172,39 @@ export class PostDetailPageComponent {
   });
 
   constructor() {
-    if (!this.postId) {
-      this.errorMessage.set('No se encontro el id del post.');
-      return;
-    }
+    this.route.paramMap
+      .pipe(
+        // extrae el id de los parametros de ruta
+        map((params) => params.get('id')),
+        // cancela la peticion anterior si el id cambia
+        switchMap((id) => {
+          if (!id) {
+            this.errorMessage.set('No se encontro el id del post.');
+            return EMPTY;
+          }
 
-    forkJoin({
-      post: this.postsService.getPost(this.postId),
-      comments: this.postsService.getCommentsByPostId(this.postId),
-    }).subscribe({
-      next: ({ post, comments }) => {
-        this.post.set(post);
-        this.comments.set(comments);
-      },
-      error: () => this.errorMessage.set('No se pudo cargar el detalle del post.'),
-    });
+          return forkJoin({
+            post: this.postsService.getPost(id),
+            comments: this.postsService.getCommentsByPostId(id),
+          }).pipe(
+            // reintenta hasta 2 veces si alguna de las dos peticiones falla
+            retry(2),
+          );
+        }),
+        // actualiza los signals como efecto secundario al recibir los datos
+        tap(({ post, comments }) => {
+          this.post.set(post);
+          this.comments.set(comments);
+          this.isLoading.set(false);
+        }),
+        // captura el error definitivo tras los reintentos
+        catchError(() => {
+          this.errorMessage.set('No se pudo cargar el detalle del post.');
+          this.isLoading.set(false);
+          return EMPTY;
+        }),
+      )
+      .subscribe();
   }
 
   protected isCommentInvalid(controlName: 'name' | 'email' | 'body'): boolean {
