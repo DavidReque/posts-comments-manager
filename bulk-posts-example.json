@@ -1,0 +1,52 @@
+[
+  {
+    "title": "Introduccion a NestJS",
+    "body": "NestJS es un framework progresivo de Node.js para construir aplicaciones del lado del servidor eficientes y escalables. Utiliza TypeScript de forma nativa y combina elementos de la programacion orientada a objetos, funcional y reactiva.",
+    "author": "Carlos Mendoza"
+  },
+  {
+    "title": "Angular Signals: el nuevo modelo de reactividad",
+    "body": "A partir de Angular 16, los signals ofrecen una forma mas granular y predecible de manejar el estado. Con computed() y effect() se reduce la dependencia de RxJS para el estado local de los componentes.",
+    "author": "Laura Herrera"
+  },
+  {
+    "title": "MongoDB con Mongoose: buenas practicas",
+    "body": "Mongoose facilita el trabajo con MongoDB en Node.js mediante esquemas y modelos. Es importante definir indices correctamente, usar lean() cuando no se necesita un documento completo y manejar la conexion de forma robusta.",
+    "author": "Diego Ramirez"
+  },
+  {
+    "title": "Manejo de errores en Angular con interceptores",
+    "body": "Los HttpInterceptors en Angular permiten centralizar el manejo de errores de red. Con catchError se puede redirigir al usuario, mostrar mensajes claros o reintentar la peticion segun el codigo de estado HTTP.",
+    "author": "Sofia Torres"
+  },
+  {
+    "title": "Autenticacion JWT en NestJS",
+    "body": "JSON Web Tokens permiten autenticar usuarios de forma stateless. En NestJS se implementa con @nestjs/jwt y Guards personalizados que verifican el token en el encabezado Authorization antes de permitir acceso a las rutas protegidas.",
+    "author": "Marco Rios"
+  },
+  {
+    "title": "Tailwind CSS en proyectos Angular",
+    "body": "Tailwind es una libreria de utilidades CSS que permite construir interfaces rapidamente sin salir del HTML. Se integra con Angular a traves de PostCSS y permite mantener los estilos cerca de los componentes sin archivos CSS separados por componente.",
+    "author": "Valeria Castillo"
+  },
+  {
+    "title": "Paginacion en APIs REST con NestJS",
+    "body": "Implementar paginacion real en el backend evita cargar colecciones enteras en memoria. Con los parametros page y limit se puede combinar skip() y limit() de Mongoose, ademas de devolver el total de documentos para calcular las paginas en el frontend.",
+    "author": "Andres Fuentes"
+  },
+  {
+    "title": "SSR con Angular y Express",
+    "body": "El Server-Side Rendering en Angular mejora el tiempo de carga inicial y el SEO. Con @angular/ssr y un servidor Express se renderizan las vistas en el servidor antes de enviarlas al navegador, manteniendo la hidracion en el cliente.",
+    "author": "Natalia Vargas"
+  },
+  {
+    "title": "Operadores RxJS mas usados en Angular",
+    "body": "switchMap cancela la peticion anterior al llegar una nueva, ideal para busquedas en tiempo real. catchError captura errores del stream sin interrumpirlo. tap es util para efectos secundarios como logging. combineLatest combina multiples observables.",
+    "author": "Luis Espinoza"
+  },
+  {
+    "title": "Formularios reactivos en Angular",
+    "body": "ReactiveFormsModule ofrece control programatico sobre los formularios. FormBuilder simplifica la creacion de grupos y controles. Los validadores sincronos y asincronos permiten mostrar errores precisos al usuario sin duplicar logica de validacion.",
+    "author": "Isabel Moreno"
+  }
+]

@@ -1,0 +1,222 @@
+{
+  "info": {
+    "name": "Posts & Comments Manager",
+    "description": "Coleccion completa de endpoints para la API de posts-comments-manager.\nBase URL: http://localhost:3000\n\nFlujo de uso:\n1. Ejecutar 'Login' para obtener el accessToken.\n2. Copiar el valor de accessToken en la variable de coleccion 'token'.\n3. Los endpoints protegidos enviaran el token automaticamente.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string",
+      "description": "Pegar aqui el accessToken obtenido en la peticion de Login"
+    },
+    {
+      "key": "postId",
+      "value": "",
+      "type": "string",
+      "description": "ID de un post existente"
+    },
+    {
+      "key": "commentId",
+      "value": "",
+      "type": "string",
+      "description": "ID de un comentario existente"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Inicia sesion y devuelve un JWT. Copia el valor de 'accessToken' en la variable 'token' de la coleccion."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Posts",
+      "item": [
+        {
+          "name": "Listar posts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/posts?page=1&limit=6",
+              "host": ["{{baseUrl}}"],
+              "path": ["posts"],
+              "query": [
+                { "key": "page",   "value": "1",  "description": "Pagina (minimo 1)" },
+                { "key": "limit",  "value": "6",  "description": "Resultados por pagina (max 20)" },
+                { "key": "search", "value": "",   "description": "Filtrar por titulo (opcional)", "disabled": true }
+              ]
+            },
+            "description": "Devuelve posts paginados. Usa el parametro 'search' para filtrar por titulo."
+          }
+        },
+        {
+          "name": "Obtener post por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/posts/{{postId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["posts", "{{postId}}"]
+            },
+            "description": "Devuelve un post por su ObjectId de MongoDB. Reemplaza la variable 'postId'."
+          }
+        },
+        {
+          "name": "Crear post",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Mi primer post\",\n  \"body\": \"Este es el contenido del post de ejemplo creado desde Postman.\",\n  \"author\": \"Usuario de prueba\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/posts",
+              "host": ["{{baseUrl}}"],
+              "path": ["posts"]
+            },
+            "description": "Crea un post. Requiere JWT en el header Authorization."
+          }
+        },
+        {
+          "name": "Editar post",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Titulo actualizado\",\n  \"body\": \"Contenido actualizado del post desde Postman.\",\n  \"author\": \"Usuario editado\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/posts/{{postId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["posts", "{{postId}}"]
+            },
+            "description": "Edita un post existente. Requiere JWT. Envia solo los campos que deseas cambiar."
+          }
+        },
+        {
+          "name": "Eliminar post",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/posts/{{postId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["posts", "{{postId}}"]
+            },
+            "description": "Elimina un post por ID. No requiere autenticacion."
+          }
+        },
+        {
+          "name": "Carga masiva de posts",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"title\": \"Post de carga masiva 1\",\n    \"body\": \"Contenido del primer post insertado en bloque.\",\n    \"author\": \"Autor Uno\"\n  },\n  {\n    \"title\": \"Post de carga masiva 2\",\n    \"body\": \"Contenido del segundo post insertado en bloque.\",\n    \"author\": \"Autor Dos\"\n  },\n  {\n    \"title\": \"Post de carga masiva 3\",\n    \"body\": \"Contenido del tercer post insertado en bloque.\",\n    \"author\": \"Autor Tres\"\n  }\n]"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/posts/bulk",
+              "host": ["{{baseUrl}}"],
+              "path": ["posts", "bulk"]
+            },
+            "description": "Inserta multiples posts en una sola operacion con insertMany. Requiere JWT. El cuerpo debe ser un arreglo de objetos con title, body y author."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Comments",
+      "item": [
+        {
+          "name": "Listar comentarios de un post",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/comments?postId={{postId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["comments"],
+              "query": [
+                { "key": "postId", "value": "{{postId}}", "description": "ObjectId del post" }
+              ]
+            },
+            "description": "Devuelve todos los comentarios asociados al postId indicado."
+          }
+        },
+        {
+          "name": "Crear comentario",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"postId\": \"{{postId}}\",\n  \"name\": \"Juan Perez\",\n  \"email\": \"juan.perez@ejemplo.com\",\n  \"body\": \"Este es un comentario de prueba creado desde Postman.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/comments",
+              "host": ["{{baseUrl}}"],
+              "path": ["comments"]
+            },
+            "description": "Crea un comentario asociado a un post. No requiere autenticacion."
+          }
+        },
+        {
+          "name": "Eliminar comentario",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/comments/{{commentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["comments", "{{commentId}}"]
+            },
+            "description": "Elimina un comentario por ID. Requiere JWT."
+          }
+        }
+      ]
+    }
+  ]
+}
