@@ -10,6 +10,7 @@ Construida con NestJS, MongoDB y Angular.
 - Node.js 20 o superior
 - npm 10 o superior
 - Una instancia de MongoDB accesible (local o en la nube, por ejemplo MongoDB Atlas)
+- Docker Desktop (opcional, solo si quieres levantar el backend y MongoDB con Docker)
 
 ---
 
@@ -65,6 +66,84 @@ npm run start:dev
 ```
 
 El servidor queda disponible en `http://localhost:3000`.
+
+---
+
+## Ejecutar backend con Docker
+
+El backend incluye un `Dockerfile` y un `compose.yaml` dentro de `backend/`.
+Puedes usar Docker de dos maneras:
+
+- Con `docker compose`: levanta la API y MongoDB juntos.
+- Con `Dockerfile`: construye solo la imagen de la API; necesitas tener MongoDB aparte.
+
+### Opcion 1: API + MongoDB con Docker Compose
+
+Desde la raiz del repositorio:
+
+```bash
+cd backend
+docker compose up --build
+```
+
+Esto levanta:
+
+- API NestJS en `http://localhost:3000`
+- MongoDB en `localhost:27017`
+
+El `compose.yaml` ya define las variables necesarias para desarrollo:
+
+```env
+MONGODB_URI=mongodb://mongo:27017/posts-comments-manager
+FRONTEND_URL=http://localhost:4200
+AUTH_USERNAME=admin
+AUTH_PASSWORD=admin123
+JWT_SECRET=dev-jwt-secret
+JWT_EXPIRES_IN_SECONDS=3600
+```
+
+Para detener los servicios:
+
+```bash
+docker compose down
+```
+
+Para detenerlos y borrar tambien los datos guardados en el volumen de MongoDB:
+
+```bash
+docker compose down -v
+```
+
+### Opcion 2: Construir solo la API con el Dockerfile
+
+Usa esta opcion si ya tienes MongoDB corriendo localmente o en otro servicio.
+
+Desde la raiz del repositorio:
+
+```bash
+cd backend
+docker build -t posts-comments-api .
+```
+
+Ejecuta el contenedor apuntando a MongoDB local:
+
+```bash
+docker run --rm -p 3000:3000 ^
+  -e PORT=3000 ^
+  -e MONGODB_URI=mongodb://host.docker.internal:27017/posts-comments-manager ^
+  -e FRONTEND_URL=http://localhost:4200 ^
+  -e AUTH_USERNAME=admin ^
+  -e AUTH_PASSWORD=admin123 ^
+  -e JWT_SECRET=dev-jwt-secret ^
+  -e JWT_EXPIRES_IN_SECONDS=3600 ^
+  posts-comments-api
+```
+
+El ejemplo anterior usa continuacion de linea de `cmd`. En PowerShell puedes usar una sola linea:
+
+```bash
+docker run --rm -p 3000:3000 -e PORT=3000 -e MONGODB_URI=mongodb://host.docker.internal:27017/posts-comments-manager -e FRONTEND_URL=http://localhost:4200 -e AUTH_USERNAME=admin -e AUTH_PASSWORD=admin123 -e JWT_SECRET=dev-jwt-secret -e JWT_EXPIRES_IN_SECONDS=3600 posts-comments-api
+```
 
 ---
 
@@ -180,6 +259,112 @@ Ejemplo minimo:
   { "title": "Titulo del post", "body": "Contenido del post", "author": "Nombre del autor" },
   { "title": "Otro titulo",     "body": "Otro contenido",     "author": "Otro autor" }
 ]
+```
+
+---
+
+## Probar endpoints con PowerShell
+
+Antes de ejecutar estos comandos, asegurate de que el backend este corriendo en
+`http://localhost:3000`.
+
+### Variables base
+
+```powershell
+$base = "http://localhost:3000"
+$root = "C:\Users\david.LAPTOP-RHBMMHCD\posts-comments-manager"
+```
+
+### Login y token
+
+```powershell
+$loginBody = '{"username":"admin","password":"admin123"}'
+$login = Invoke-RestMethod -Uri "$base/auth/login" -Method POST -Body $loginBody -ContentType "application/json;charset=utf-8"
+$token = $login.data.accessToken
+
+$headers = @{
+  Authorization = "Bearer $token"
+  "Content-Type" = "application/json;charset=utf-8"
+}
+```
+
+### Listar posts
+
+```powershell
+Invoke-RestMethod -Uri "$base/posts?page=1&limit=6" -Method GET
+```
+
+### Listar posts con busqueda
+
+```powershell
+Invoke-RestMethod -Uri "$base/posts?page=1&limit=6&search=Angular" -Method GET
+```
+
+### Crear un post
+
+```powershell
+$createBody = '{"title":"Post desde PowerShell","body":"Contenido de prueba con mas de diez caracteres.","author":"Tester"}'
+$created = Invoke-RestMethod -Uri "$base/posts" -Method POST -Body $createBody -Headers $headers
+$postId = $created.data._id
+$postId
+```
+
+### Obtener un post por ID
+
+```powershell
+Invoke-RestMethod -Uri "$base/posts/$postId" -Method GET
+```
+
+### Editar un post
+
+```powershell
+$updateBody = '{"title":"Titulo actualizado","body":"Cuerpo actualizado con mas de diez caracteres.","author":"Tester"}'
+Invoke-RestMethod -Uri "$base/posts/$postId" -Method PUT -Body $updateBody -Headers $headers
+```
+
+### Crear un comentario
+
+```powershell
+$commentBody = "{`"postId`":`"$postId`",`"name`":`"Ana Tester`",`"email`":`"ana@test.local`",`"body`":`"Comentario de prueba`"}"
+$newComment = Invoke-RestMethod -Uri "$base/comments" -Method POST -Body $commentBody -ContentType "application/json;charset=utf-8"
+$commentId = $newComment.data._id
+$commentId
+```
+
+### Listar comentarios de un post
+
+```powershell
+Invoke-RestMethod -Uri "$base/comments?postId=$postId" -Method GET
+```
+
+### Eliminar un comentario
+
+```powershell
+Invoke-RestMethod -Uri "$base/comments/$commentId" -Method DELETE -Headers @{ Authorization = "Bearer $token" }
+```
+
+### Carga masiva de posts
+
+```powershell
+$bulkJson = Get-Content -Raw "$root\bulk-posts-example.json"
+Invoke-RestMethod -Uri "$base/posts/bulk" -Method POST -Body $bulkJson -Headers $headers
+```
+
+### Eliminar un post
+
+```powershell
+Invoke-RestMethod -Uri "$base/posts/$postId" -Method DELETE
+```
+
+### Probar un error controlado
+
+```powershell
+try {
+  Invoke-RestMethod -Uri "$base/posts/bulk" -Method POST -Body "[]" -Headers $headers
+} catch {
+  $_.Exception.Response.StatusCode.value__
+  $_.ErrorDetails.Message
+}
 ```
 
 ---
